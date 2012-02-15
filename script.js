@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded',function(){
 	apiUrl	    = 'http://' + serverHost + ':' + serverPort + '/phone-call/api/message/',
 	calls	    = [],
 	list	    = document.getElementById('list'),
-	messageForm  = document.forms['new_message'];
+	messageForm  = document.forms['new_message'],
+        el_loading  = document.getElementById('loading'),
+        loading     = false;
 	
 	
     /**
@@ -72,6 +74,30 @@ document.addEventListener('DOMContentLoaded',function(){
 	}
     }
     
+    function setLoading()
+    {
+        loading = true;
+        el_loading.setAttribute( 'class','loading' );
+    }
+    
+    function unSetLoading()
+    {
+        loading = false;
+        el_loading.setAttribute( 'class', null );
+    }
+    
+    
+    calls = [
+        {call_to : 'Test', call_from : 'Test', id : 1, priority : 1},
+        {call_to : 'Test', call_from : 'Test', id : 2, priority : 2},
+        {call_to : 'Test', call_from : 'Test', id : 3, priority : 3},
+        {call_to : 'Test', call_from : 'Test', id : 4, priority : 1},
+        {call_to : 'Test', call_from : 'Test', id : 5, priority : 2},
+        {call_to : 'Test', call_from : 'Test', id : 6, priority : 3},
+    ]
+    
+    updateMessages();
+    
     function updateMessages()
     {
 	if( calls.length ){
@@ -91,8 +117,9 @@ document.addEventListener('DOMContentLoaded',function(){
 		    };
 		    
 		li.id = 'message_' + id;
+                li.setAttribute( 'class', 'priority_' + call.priority );
 		
-		li.innerHTML = 'To: ' + call.call_to + ', From: ' + call.call_from;
+		li.innerHTML = 'To: <strong>' + call.call_to + '</strong>, From: <strong>' + call.call_from + '</strong>';
 		    
 		// delete button
 		del.innerHTML = '&times;';
@@ -106,20 +133,28 @@ document.addEventListener('DOMContentLoaded',function(){
 	}
     }
     
-    
+    /**
+     * Handle form submission
+     */
     messageForm.addEventListener( 'submit', function(event){
 	var input_from	= document.getElementById('f_from'),
 	    input_to	= document.getElementById('f_to'),
 	    values = {
 		call_from : input_from.value,
 		call_to : input_to.value
-	    };
+	    },
+            el_button = document.getElementsByTagName('button')[0];
+        setLoading();
+        
+        el_button.setAttribute( 'disabled', 'disabled' );
 	
 	talkToServer( 'POST', function( res ){
 	    
-
+            
 
 	    console.log(res);
+            unSetLoading();
+            el_button.removeAttribute( 'disabled' );
 
 	}, values );
 	
