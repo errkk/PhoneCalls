@@ -75,18 +75,6 @@ document.addEventListener('DOMContentLoaded',function(){
     }
     
     
-    calls = [
-        {call_to : 'Test', call_from : 'Test', id : 1, priority : 1},
-        {call_to : 'Test', call_from : 'Test', id : 2, priority : 2},
-        {call_to : 'Test', call_from : 'Test', id : 3, priority : 3},
-        {call_to : 'Test', call_from : 'Test', id : 4, priority : 1},
-        {call_to : 'Test', call_from : 'Test', id : 5, priority : 2},
-        {call_to : 'Test', call_from : 'Test', id : 6, priority : 3}
-    ];
-    
-    updateMessages();
-    
-    
     /**
      * Display all messages in the list
      * Messages are saved in the global(ish) variable, they are set by the AJAX function
