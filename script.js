@@ -43,13 +43,16 @@ document.addEventListener('DOMContentLoaded',function(){
     /**
 	* Get some data from the spotify server
 	*/
-    function talkToServer( action, callback, data )
+    function talkToServer( method, callback, data, id )
     {
 	var req = new XMLHttpRequest(),
 	    responded = false;
 
-
-	req.open( 'GET', apiUrl + '?format=json', true );
+	if( id ){
+	    apiUrl =+ '/' + id;
+	}
+	
+	req.open( method, apiUrl + '?format=json', true );
 	req.onload = function () {
 	    if( responded ){
 		return;
@@ -62,8 +65,11 @@ document.addEventListener('DOMContentLoaded',function(){
 	    }
 	    responded = true;
 	};
-
-	req.send( null );
+	if( data ){
+	    req.send(data);
+	}else{
+	    req.send();
+	}
     }
     
     function updateMessages()
@@ -78,6 +84,10 @@ document.addEventListener('DOMContentLoaded',function(){
 		    id = call.id,
 		    delete_function = function(){
 			console.log( 'Delete: ' + this.message_id );
+			
+			talkToServer( 'DELETE', function(){
+			    console.log('delete callback');
+			}, null, this.id );
 		    };
 		    
 		li.id = 'message_' + id;
@@ -98,7 +108,21 @@ document.addEventListener('DOMContentLoaded',function(){
     
     
     messageForm.addEventListener( 'submit', function(event){
-	console.log(this);
+	var input_from	= document.getElementById('f_from'),
+	    input_to	= document.getElementById('f_to'),
+	    values = {
+		call_from : input_from.value,
+		call_to : input_to.value
+	    };
+	
+	talkToServer( 'POST', function( res ){
+	    
+
+
+	    console.log(res);
+
+	}, values );
+	
 	event.preventDefault();
 	
     }, true );
@@ -109,7 +133,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 
     // Check server status
-    talkToServer( 'check', function( res ){
+    talkToServer( 'GET', function( res ){
 	try{
 	    var meta = res.meta;
 	}catch( e ){
