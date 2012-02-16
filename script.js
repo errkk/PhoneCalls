@@ -73,7 +73,12 @@ document.addEventListener('DOMContentLoaded',function(){
     {
 	var i = getLocalCall( id, true );
 	
-	if( i !== false ){
+	if( calls.length === 1 ){
+	    // only one item, so remove it
+	    calls = [];
+	    
+	    return true;
+	}else if( i !== false ){
 	    calls.splice( i, 1 );
 	    return true;
 	}
@@ -106,6 +111,7 @@ document.addEventListener('DOMContentLoaded',function(){
      */
     function updateMessages()
     {
+	
 	if( calls.length ){
 	    list.innerHTML = '';
 	    var l = calls.length,
@@ -141,6 +147,9 @@ document.addEventListener('DOMContentLoaded',function(){
 		list.appendChild( li );
 		
 	    }
+	}else{
+	    // No calls, so clean up markup
+	    list.innerHTML = '';
 	}
     }
     
@@ -158,7 +167,9 @@ document.addEventListener('DOMContentLoaded',function(){
 	    req		= new XMLHttpRequest(),
 	    jsondata	= JSON.stringify(values);
 	    
-	    
+	    if( !values.call_from.length || !values.call_to.length ){
+		alert('Form');
+	    }
 	    
         
         
@@ -169,9 +180,16 @@ document.addEventListener('DOMContentLoaded',function(){
 	req.setRequestHeader( 'Content-type', 'application/json' );
 	req.setRequestHeader( 'Accept', 'text/plain' );
 	req.onreadystatechange  = function () {
-	    unSetLoading();
+	    
 	    el_button.removeAttribute( 'disabled' );
-	    updateMessagesRemote();
+	    
+	    updateMessagesRemote(function(){
+		// Erase values from fields once data has been sent
+		input_from.value = '';
+		input_to.value = '';
+		unSetLoading();
+	    });
+	    
 	}
 	req.send( jsondata );
 	
@@ -179,7 +197,9 @@ document.addEventListener('DOMContentLoaded',function(){
 	
     }, true );
     
-    
+    /**
+     * Loop thru priorities upgrading each time the thingy is clicked
+     */
     function togglePriority( id )
     {
 	var localCall	= getLocalCall( id ),
@@ -200,10 +220,6 @@ document.addEventListener('DOMContentLoaded',function(){
 		'priority' : newpriority
 	    },
 	    jsondata	= JSON.stringify(values);
-	
-	
-	
-	console.log(localCall);
 	
 	// Send webservice request
 	req.open( 'PUT', apiUrl + id + '?format=json', false );
@@ -229,7 +245,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
     // Check server status
     
-    function updateMessagesRemote(){
+    function updateMessagesRemote( callback ){
 	var req = new XMLHttpRequest();
 	req.open( 'GET', apiUrl + '?format=json', true );
 	req.onload = function () {
@@ -237,6 +253,7 @@ document.addEventListener('DOMContentLoaded',function(){
             var res,
 		meta;
             
+	    // Process response
 	    if ( req.readyState == 4 && req.status == 200 ) {
 		res = JSON.parse( req.responseText );
 	    }
@@ -248,15 +265,21 @@ document.addEventListener('DOMContentLoaded',function(){
 	    }
 
 
+	    // Put status indicator in place, if not alreay loaded
 	    if( res.meta.total_count > 0 && !document.getElementById('status') ){
 		var span = document.createElement( 'span' );
 		span.id = 'status';
 		document.getElementById('title').appendChild( span );
 	    }
-
+	    
+	    // There are messages, update local strore, and repopulate list
 	    if( res.meta.total_count > 0 ){
 		calls = res.objects;
 		updateMessages();
+	    }
+	    
+	    if( 'function' == typeof(callback) ){
+		callback();
 	    }
 	    
 	};
@@ -264,6 +287,7 @@ document.addEventListener('DOMContentLoaded',function(){
     };
     updateMessagesRemote();
     
+      
 
 
 }, false ); // End Dom ready

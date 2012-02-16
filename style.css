@@ -23,7 +23,7 @@ body { min-width:460px; overflow-x:hidden; font-family: "Lucida Grande", "Lucida
     
     /* Listing */
     #list{ padding:5px; font-size:0.8em; color:#555; }
-	#list li { padding:8px 40px 8px 10px; border-bottom:1px solid #ddd; display: block;
+	#list li { cursor: pointer; padding:8px 40px 8px 10px; border-bottom:1px solid #ddd; display: block;
             background: -webkit-linear-gradient(bottom, rgba(0,0,0,0.05) 0%,rgba(0,0,0,0) 40%); /* Chrome10+,Safari5.1+ */
             background: linear-gradient(bottom, rgba(0,0,0,0.05) 0%,rgba(0,0,0,0) 100%); /* W3C */
         }
@@ -31,7 +31,7 @@ body { min-width:460px; overflow-x:hidden; font-family: "Lucida Grande", "Lucida
         #list li.priority_2{ border-left:5px solid #080; }
         #list li.priority_3{ border-left:5px solid #ccc; }
 	/* Delete button */
-	#list li span{margin-right:-30px; cursor: pointer; display:block; float:right; background:#555; color:#fff; border-radius:15px; height:10px; padding:1px 3px 4px; vertical-align: middle; font-size:10px; box-shadow: inset 0 1px 1px #000; text-shadow: 0 1px 1px #333; font-weight:bold;}
+	#list li span{margin-right:-30px; cursor: pointer; display:block; float:right; background:#555; color:#fff; border-radius:15px; height:10px; padding:0 3px 5px 3px; vertical-align: middle; font-size:9px; box-shadow: inset 0 1px 1px #000; text-shadow: 0 1px 1px #333; font-weight:bold;}
 	#list li span:hover{background:#222;}
 
     
