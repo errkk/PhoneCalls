@@ -9,6 +9,7 @@
 document.addEventListener('DOMContentLoaded',function(){
 
     
+//    var serverHost  = 'myth.readingroom.local',
     var serverHost  = 'localhost',
 	serverPort  = 8000,
 	apiUrl	    = 'http://' + serverHost + ':' + serverPort + '/phone-call/api/v1/message/',
@@ -43,25 +44,40 @@ document.addEventListener('DOMContentLoaded',function(){
 	    }
 	};
 	req.send();
-	
-	
     }
+	
+
+
+    function getLocalCall( id, getindex )
+    {
+	try{
+	    for( i in calls ){
+		var call = calls[i];
+		if( call.id == id ){
+		    if( getindex ){
+			return i;
+		    }
+		    return call;
+		}
+	    }
+	    return false;
+	}catch(e){}
+    }
+    
+    
     /**
      * Delete a call by ID from local instance
      * 
      */
     function deleteLocalCall(id)
     {
-	try{
-	    for( i in calls ){
-		var call = calls[i];
-		if( call.id == id ){
-		    calls.splice( i, 1 );
-		    return true;
-		}
-	    }
-	    return false;
-	}catch(e){}
+	var i = getLocalCall( id, true );
+	
+	if( i !== false ){
+	    calls.splice( i, 1 );
+	    return true;
+	}
+	return false;
     }
     
     /**
@@ -96,7 +112,10 @@ document.addEventListener('DOMContentLoaded',function(){
                 delete_function = function(){
 		    setLoading();
                     deleteItem( this.message_id, unSetLoading );
-                };
+                },
+		priority_function = function(){
+		    togglePriority( this.message_id );
+		};
             
             
 	    while( l-- ){
@@ -110,6 +129,8 @@ document.addEventListener('DOMContentLoaded',function(){
                 li.setAttribute( 'class', 'priority_' + call.priority );
 		
 		li.innerHTML = 'To: <strong>' + call.call_to + '</strong>, From: <strong>' + call.call_from + '</strong>';
+		li.message_id = id;
+		li.addEventListener('dblclick', priority_function, true );
 		    
 		// delete button
 		del.innerHTML = '&times;';
@@ -157,6 +178,47 @@ document.addEventListener('DOMContentLoaded',function(){
 	event.preventDefault();
 	
     }, true );
+    
+    
+    function togglePriority( id )
+    {
+	var localCall	= getLocalCall( id ),
+	    req		= new XMLHttpRequest(),
+	    newpriority = 3;
+	
+	setLoading();
+	
+	// Toggle new priority
+	if( localCall.priority > 0 ){
+	    newpriority = localCall.priority - 1;
+	}else{
+	    newpriority = 3;
+	}
+	
+	// Set new values
+	var values = {
+		'priority' : newpriority
+	    },
+	    jsondata	= JSON.stringify(values);
+	
+	
+	
+	console.log(localCall);
+	
+	// Send webservice request
+	req.open( 'PUT', apiUrl + id + '?format=json', false );
+	req.setRequestHeader( 'Content-type', 'application/json' );
+	req.setRequestHeader( 'Accept', 'text/plain' );
+	req.onreadystatechange  = function () {
+	    unSetLoading();
+	    updateMessagesRemote();
+	}
+	req.send( jsondata );
+	
+    }
+    
+    /* bind event */
+    
     
 	
 	
