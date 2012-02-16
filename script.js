@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded',function(){
     
     var serverHost  = 'localhost',
 	serverPort  = 8000,
-	apiUrl	    = 'http://' + serverHost + ':' + serverPort + '/phone-call/api/message/',
+	apiUrl	    = 'http://' + serverHost + ':' + serverPort + '/phone-call/api/v1/message/',
 	calls	    = [],
 	list	    = document.getElementById('list'),
 	messageForm  = document.forms.new_message,
@@ -19,41 +19,49 @@ document.addEventListener('DOMContentLoaded',function(){
         loading     = false;
 	
 	
-  
-
     /**
-     * Get some data from the server
+     * Delete a message from the remove server via DELETE request
      */
-    function talkToServer( method, callback, data, id )
+    function deleteItem( id, callback )
     {
-	var req = new XMLHttpRequest(),
-	    responded = false;
-
-	if( id ){
-	    apiUrl =+ '/' + id;
-	}
+	var req = new XMLHttpRequest();
 	
-	req.open( method, apiUrl + '?format=json', true );
-	req.onload = function () {
-	    if( responded ){
-		return;
-	    }
-            
-            var the_object;
+	req.open( 'DELETE', apiUrl + id + '?format=json', true );
+	req.onload = function(){
+	    var the_object;
             
 	    if ( req.readyState == 4 && req.status == 200 ) {
 		the_object = JSON.parse( req.responseText );
 	    }
+	    // delete from local instance
+	    deleteLocalCall(id);
+	    // reset list
+	    updateMessages();
+	    // run the callback
 	    if( 'function' == typeof( callback ) ){
 		callback( the_object );
 	    }
-	    responded = true;
 	};
-	if( data ){
-	    req.send(data);
-	}else{
-	    req.send();
-	}
+	req.send();
+	
+	
+    }
+    /**
+     * Delete a call by ID from local instance
+     * 
+     */
+    function deleteLocalCall(id)
+    {
+	try{
+	    for( i in calls ){
+		var call = calls[i];
+		if( call.id == id ){
+		    calls.splice( i, 1 );
+		    return true;
+		}
+	    }
+	    return false;
+	}catch(e){}
     }
     
     /**
@@ -86,11 +94,8 @@ document.addEventListener('DOMContentLoaded',function(){
 	    list.innerHTML = '';
 	    var l = calls.length,
                 delete_function = function(){
-                    console.log( 'Delete: ' + this.message_id );
-
-                    talkToServer( 'DELETE', function(){
-                        console.log('delete callback');
-                    }, null, this.id );
+		    setLoading();
+                    deleteItem( this.message_id, unSetLoading );
                 };
             
             
@@ -119,29 +124,35 @@ document.addEventListener('DOMContentLoaded',function(){
     }
     
     /**
-     * Handle form submission
+     * Handle form submission, send a new message to the server via post
      */
     messageForm.addEventListener( 'submit', function(event){
 	var input_from	= document.getElementById('f_from'),
 	    input_to	= document.getElementById('f_to'),
 	    values = {
-		call_from : input_from.value,
-		call_to : input_to.value
+		'call_from' : input_from.value,
+		'call_to' : input_to.value
 	    },
-            el_button = document.getElementsByTagName('button')[0];
-        setLoading();
+            el_button	= document.getElementsByTagName('button')[0],
+	    req		= new XMLHttpRequest(),
+	    jsondata	= JSON.stringify(values);
+	    
+	    
+	    
         
+        
+	setLoading();
         el_button.setAttribute( 'disabled', 'disabled' );
 	
-	talkToServer( 'POST', function( res ){
-	    
-            
-
-	    console.log(res);
-            unSetLoading();
-            el_button.removeAttribute( 'disabled' );
-
-	}, values );
+	req.open( 'POST', apiUrl + '?format=json', false );
+	req.setRequestHeader( 'Content-type', 'application/json' );
+	req.setRequestHeader( 'Accept', 'text/plain' );
+	req.onreadystatechange  = function () {
+	    unSetLoading();
+	    el_button.removeAttribute( 'disabled' );
+	    updateMessagesRemote();
+	}
+	req.send( jsondata );
 	
 	event.preventDefault();
 	
@@ -155,28 +166,42 @@ document.addEventListener('DOMContentLoaded',function(){
     // Init Code _______________________________________________________________
 
     // Check server status
-    talkToServer( 'GET', function( res ){
-        var meta;
-        try{
-	    meta = res.meta;
-	}catch( e ){
-	    meta = false;
-	}
+    
+    function updateMessagesRemote(){
+	var req = new XMLHttpRequest();
+	req.open( 'GET', apiUrl + '?format=json', true );
+	req.onload = function () {
+	                
+            var res,
+		meta;
+            
+	    if ( req.readyState == 4 && req.status == 200 ) {
+		res = JSON.parse( req.responseText );
+	    }
+	    
+	    try{
+		meta = res.meta;
+	    }catch( e ){
+		meta = false;
+	    }
 
 
-	if( res.meta.total_count > 0 ){
-	    var span = document.createElement( 'span' );
-	    span.id = 'status';
-	    document.getElementById('title').appendChild( span );
-	}
+	    if( res.meta.total_count > 0 && !document.getElementById('status') ){
+		var span = document.createElement( 'span' );
+		span.id = 'status';
+		document.getElementById('title').appendChild( span );
+	    }
 
-	if( res.meta.total_count > 0 ){
-	    calls = res.objects;
-	    updateMessages();
-	}
-
-    }, '' );
-	
+	    if( res.meta.total_count > 0 ){
+		calls = res.objects;
+		updateMessages();
+	    }
+	    
+	};
+	req.send();
+    };
+    updateMessagesRemote();
+    
 
 
 }, false ); // End Dom ready
